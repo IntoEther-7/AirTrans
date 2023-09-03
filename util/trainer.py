@@ -108,7 +108,7 @@ def trainer_for_air_trans(
     # 训练轮数
     if continue_epoch is not None and continue_iteration is not None:
         continue_weight = os.path.join(save_root, 'weights',
-                                       'FRDet_{}_{}.pth'.format(continue_epoch, continue_iteration))
+                                       'AirTrans_{}_{}.pth'.format(continue_epoch, continue_iteration))
         weight = torch.load(continue_weight)
         model.load_state_dict(weight['models'])
         continue_done = False
@@ -207,7 +207,7 @@ def trainer_for_air_trans(
                     loss_dict_train = {}
                     json.dump(tmp_loss_dict, f)
                 torch.save({'models': model.state_dict()},
-                           os.path.join(save_weights, 'FRDet_{}_{}.pth'.format(epoch + 1, iteration)))
+                           os.path.join(save_weights, 'AirTrans_{}_{}.pth'.format(epoch + 1, iteration)))
 
                 with open(save_val_loss, 'r') as f:
                     tmp_loss_dict = json.load(f)

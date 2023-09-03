@@ -144,7 +144,7 @@ class AirTrans(GeneralizedRCNN):
 
         if box_predictor is None:
             representation_size = 1024
-            box_predictor = AirTransPredictHead(way, shot, representation_size)
+            box_predictor = AirTransPredictHead(way, shot, representation_size, roi_size)
         roi_heads: AirTransRoIHeads = AirTransRoIHeads(
             # Box
             box_roi_pool, box_head, box_predictor,

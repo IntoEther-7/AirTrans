@@ -148,7 +148,7 @@ def test_iteration(dataset, model, save_images):
     predictions = []
     for index, item in enumerate(pbar):
         support, bg, query, query_anns, cat_ids = item
-        result = model.forward(support, query, bg, targets=query_anns)
+        result = model.forward(support, query, targets=query_anns)
 
         # # 需要保留attention实验结果
         # img_id = query_anns[0]['image_id'][0]
@@ -163,11 +163,11 @@ def test_iteration(dataset, model, save_images):
         # while os.path.exists(p):
         #     p = p + '(1)'
         # os.rename(os.path.join('show_attention1', '1'), p)
-        #
-        # postfix = {'mission': '{:3}/{:3}'.format(index + 1, len(pbar)),
-        #            'catIds': cat_ids}
-        # pbar.set_postfix(postfix)
-        # predictions.extend(result_process(dataset, result, query_anns, save_images, cat_ids))
+
+        postfix = {'mission': '{:3}/{:3}'.format(index + 1, len(pbar)),
+                   'catIds': cat_ids}
+        pbar.set_postfix(postfix)
+        predictions.extend(result_process(dataset, result, query_anns, save_images, cat_ids))
     return predictions
 
 

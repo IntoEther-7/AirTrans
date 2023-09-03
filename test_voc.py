@@ -1,35 +1,30 @@
 # -*- coding:utf-8 -*-
 """
 @Editor: Ether
-@Time: 2023/9/2 19:08
-@File: train_voc
+@Time: 2023/9/3 9:50
+@File: test_voc
 @Contact: 211307040003@hhu.edu.cn
 @Version: 1.0
 @Description: None
 """
+import os.path
+
+import torch
+from util.dataset import *
 
 from model.air_trans import AirTrans
-from util.dataset import *
-from util.trainer import trainer_for_air_trans
+from util.tester import tester_for_air_trans
 
 torch.set_printoptions(sci_mode=False)
 root = '/home/chenzh/code/FRNOD/datasets/voc/VOCdevkit/VOC2012'
 json_path = 'cocoformatJson/voc_2012_train.json'
 img_path = 'JPEGImages'
-loss_weights0 = {'loss_classifier': 1, 'loss_box_reg': 1,
-                 'loss_objectness': 1, 'loss_rpn_box_reg': 1,
-                 'loss_attention': 1, 'loss_aux': 1}
-loss_weights1 = {'loss_classifier': 1, 'loss_box_reg': 1,
-                 'loss_objectness': 1, 'loss_rpn_box_reg': 1,
-                 'loss_attention': 0.03, 'loss_aux': 0.03}
-loss_weights无监督attention = {'loss_classifier': 1, 'loss_box_reg': 1,
-                               'loss_objectness': 1, 'loss_rpn_box_reg': 1,
-                               'loss_attention': 0, 'loss_aux': 1}
+continue_weight = None
+save_root = None
 
 
-def way_shot_train(way, shot, lr, loss_weights, gpu_index, loss_weights_index, split_cats):
-    save_root = '/data/chenzh/AirTrans/results/air_trans_{}/result_voc_r50_{}way_{}shot_lr{}' \
-        .format(loss_weights_index, way, shot, lr)
+def way_shot_test(way, shot, lr, index):
+    # result_voc_r50_2way_5shot_lr2e-06_loss_weight_0
     model = AirTrans(
         # box_predictor params
         way, shot, roi_size=5, num_classes=way + 1,
@@ -57,12 +52,27 @@ def way_shot_train(way, shot, lr, loss_weights, gpu_index, loss_weights_index, s
         rpn_focal=False, head_focal=False
     )
 
-    trainer_for_air_trans(way=way, shot=shot, query_batch=4, is_cuda=True, lr=lr, gpu_index=gpu_index,
-                          root=root, json_path=json_path, img_path=img_path, split_cats=split_cats, model=model,
-                          max_epoch=60, continue_epoch=None, continue_iteration=None, continue_weight=None,
-                          save_root=save_root, loss_weights=loss_weights)
+    tester_for_air_trans(
+        # 基础参数
+        way=way, shot=shot, query_batch=1, is_cuda=True,
+        # 设备参数
+        random_seed=None, gpu_index=1,
+        # 数据集参数
+        root=root,
+        json_path=json_path,
+        img_path=img_path,
+        split_cats=base_ids_voc1,
+        # 模型
+        model=model,
+        # 权重文件
+        continue_weight=continue_weight,
+        # 保存相关的参数
+        save_root=save_root)
 
 
 if __name__ == '__main__':
-    random.seed(4096)
-    way_shot_train(5, 5, 2e-03, loss_weights0, 1, '20230903_decoder', split_cats=base_ids_voc1)
+    continue_weight = 'AirTrans_60_1305.pth'
+    save_root = os.path.join('results',
+                             'air_trans_20230903_decoder',
+                             'result_voc_r50_5way_5shot_lr0.0002')
+    way_shot_test(5, 5, 2e-04, 1)

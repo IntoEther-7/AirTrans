@@ -27,18 +27,25 @@ class AirTransBoxHead(TwoMLPHead):
 
 
 class AirTransPredictHead(nn.Module):
-    def __init__(self, way, shot, representation_size):
+    def __init__(self, way, shot, representation_size, roi_size):
         super().__init__()
         self.way = way
         self.shot = shot
         self.representation_size = representation_size
         self.bbox_pred = nn.Linear(representation_size, 4)
         self.encoder = nn.Sequential(
-            nn.Conv2d(256, 64, kernel_size=1, stride=1, padding=0),
-            nn.BatchNorm2d(64),
+            nn.Conv2d(256, 512, kernel_size=roi_size, stride=1, padding=0),
+            nn.BatchNorm2d(512),
+            nn.LeakyReLU(inplace=True))
+
+        self.encoder_flatten = nn.Sequential(
+            nn.Flatten(),  # [num, c, s, s] -> # [num, c * s * s]
+            nn.Linear(256 * roi_size * roi_size, 512),
+            # nn.BatchNorm2d(512),
             nn.LeakyReLU(inplace=True))
         self.predict_bg_score = nn.Sequential(
-            nn.Linear(representation_size, 1)
+            nn.Linear(representation_size, 1),
+            nn.LeakyReLU(inplace=True)
         )
         self.scale = nn.Parameter(torch.FloatTensor([3.0]), requires_grad=False)
 
@@ -65,7 +72,8 @@ class AirTransPredictHead(nn.Module):
         s = s.unsqueeze(0)
         q = self.encoder(boxes_features)
         q = q.unsqueeze(1)
-        metrics = (s - q).mean([2, 3, 4])  # [n, box_num]
-        bg = self.predict_bg_score(x)
-        score = torch.cat([bg, metrics], dim=1) * self.scale
+        fg_distance = (s - q).mean([2, 3, 4])  # [box_num, n]
+        bg_distance = self.predict_bg_score(x)  # [box_num, 1]
+        confidence = torch.cat([fg_distance.neg(), bg_distance.neg()], dim=1)
+        score = confidence * self.scale
         return score
