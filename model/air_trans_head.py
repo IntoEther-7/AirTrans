@@ -27,25 +27,29 @@ class AirTransBoxHead(TwoMLPHead):
 
 
 class AirTransPredictHead(nn.Module):
-    def __init__(self, way, shot, representation_size, roi_size):
+    def __init__(self, way, shot, representation_size, roi_size, is_flatten):
         super().__init__()
         self.way = way
         self.shot = shot
         self.representation_size = representation_size
         self.bbox_pred = nn.Linear(representation_size, 4)
-        self.encoder = nn.Sequential(
-            nn.Conv2d(256, 512, kernel_size=roi_size, stride=1, padding=0),
-            nn.BatchNorm2d(512),
-            nn.LeakyReLU(inplace=True))
+        self.is_flatten = is_flatten
 
+        self.encoder = nn.Sequential(
+            nn.Conv2d(256, 128, kernel_size=1, stride=1, padding=0),
+            nn.Conv2d(128, 64, kernel_size=1, stride=1, padding=0),
+            nn.Conv2d(64, 64, kernel_size=roi_size, stride=1, padding=0),
+            nn.BatchNorm2d(64),
+            nn.LeakyReLU(inplace=True))
         self.encoder_flatten = nn.Sequential(
             nn.Flatten(),  # [num, c, s, s] -> # [num, c * s * s]
-            nn.Linear(256 * roi_size * roi_size, 512),
+            nn.Linear(256 * roi_size * roi_size, 1024),
+            nn.Linear(1024, 64),
             # nn.BatchNorm2d(512),
             nn.LeakyReLU(inplace=True))
         self.predict_bg_score = nn.Sequential(
-            nn.Linear(representation_size, 1),
-            nn.LeakyReLU(inplace=True)
+
+            nn.Linear(representation_size, 1)
         )
         self.scale = nn.Parameter(torch.FloatTensor([3.0]), requires_grad=False)
 
@@ -64,8 +68,24 @@ class AirTransPredictHead(nn.Module):
         bbox_deltas = self.bbox_pred(x)
 
         # 分类
-        scores = self.cls_predictor(support, query, x)
+        if self.is_flatten:
+            scores = self.cls_predictor_flatten(support, query, x)
+        else:
+            scores = self.cls_predictor(support, query, x)
         return scores, torch.cat([bbox_deltas for _ in range(self.way + 1)], dim=1)
+
+    def cls_predictor_flatten(self, support: Tensor, boxes_features: Tensor, x: Tensor):
+        s = self.encoder_flatten(support)
+        s = s.unsqueeze(0)
+        q = self.encoder_flatten(boxes_features)
+        q = q.unsqueeze(1)
+        fg_distance = (s - q).mean(2)  # [box_num, n, 512]
+        # fg_distance = (s - q).mean([2, 3, 4])  # [box_num, n]
+        bg_distance = self.predict_bg_score(x)  # [box_num, 1]
+        distance = torch.cat([fg_distance, bg_distance], dim=1)
+        confidence = distance.neg()
+        score = confidence * self.scale.exp()
+        return score
 
     def cls_predictor(self, support: Tensor, boxes_features: Tensor, x: Tensor):
         s = self.encoder(support)
@@ -74,6 +94,7 @@ class AirTransPredictHead(nn.Module):
         q = q.unsqueeze(1)
         fg_distance = (s - q).mean([2, 3, 4])  # [box_num, n]
         bg_distance = self.predict_bg_score(x)  # [box_num, 1]
-        confidence = torch.cat([fg_distance.neg(), bg_distance.neg()], dim=1)
-        score = confidence * self.scale
+        distance = torch.cat([fg_distance, bg_distance], dim=1)
+        confidence = distance.neg()
+        score = confidence * self.scale.exp()
         return score

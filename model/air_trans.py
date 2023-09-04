@@ -29,6 +29,7 @@ class AirTrans(GeneralizedRCNN):
     def __init__(self,
                  # box_predictor params
                  way, shot, roi_size,
+                 is_flatten,
                  num_classes=None,
                  # backbone
                  backbone_name='resnet50', pretrained=False,
@@ -144,7 +145,7 @@ class AirTrans(GeneralizedRCNN):
 
         if box_predictor is None:
             representation_size = 1024
-            box_predictor = AirTransPredictHead(way, shot, representation_size, roi_size)
+            box_predictor = AirTransPredictHead(way, shot, representation_size, roi_size, is_flatten)
         roi_heads: AirTransRoIHeads = AirTransRoIHeads(
             # Box
             box_roi_pool, box_head, box_predictor,

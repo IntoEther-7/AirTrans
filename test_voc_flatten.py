@@ -27,7 +27,7 @@ def way_shot_test(way, shot, lr, index):
     # result_voc_r50_2way_5shot_lr2e-06_loss_weight_0
     model = AirTrans(
         # box_predictor params
-        way, shot, roi_size=5, is_flatten=False, num_classes=way + 1,
+        way, shot, roi_size=5, is_flatten=True, num_classes=way + 1,
         # backbone
         backbone_name='resnet50', pretrained=True,
         returned_layers=None, trainable_layers=4,
@@ -73,6 +73,6 @@ def way_shot_test(way, shot, lr, index):
 if __name__ == '__main__':
     continue_weight = 'AirTrans_60_1305.pth'
     save_root = os.path.join('results',
-                             'air_trans_20230904_decoder',
+                             'air_trans_20230904_flatten',
                              'result_voc_r50_5way_5shot_lr0.0002')
-    way_shot_test(5, 5, 2e-04, 0)
+    way_shot_test(5, 5, 2e-04, 1)

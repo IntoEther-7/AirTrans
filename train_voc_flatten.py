@@ -32,8 +32,7 @@ def way_shot_train(way, shot, lr, loss_weights, gpu_index, loss_weights_index, s
         .format(loss_weights_index, way, shot, lr)
     model = AirTrans(
         # box_predictor params
-        way, shot, is_flatten=False, roi_size=5, num_classes=way + 1,
-        # backbone
+        way, shot, is_flatten=True, roi_size=5, num_classes=way + 1,
         # backbone
         backbone_name='resnet50', pretrained=True,
         returned_layers=None, trainable_layers=4,
@@ -66,4 +65,4 @@ def way_shot_train(way, shot, lr, loss_weights, gpu_index, loss_weights_index, s
 
 if __name__ == '__main__':
     random.seed(4096)
-    way_shot_train(5, 5, 2e-03, loss_weights0, 0, '20230903_decoder', split_cats=base_ids_voc1)
+    way_shot_train(5, 5, 2e-03, loss_weights0, 1, '20230903_decoder', split_cats=base_ids_voc1)
