@@ -56,7 +56,7 @@ class AirTransPredictHead(nn.Module):
         self.predict_bg_score = nn.Sequential(
             nn.Linear(representation_size, 1),
         )
-        self.scale = nn.Parameter(torch.FloatTensor([-10.0]), requires_grad=True)
+        self.scale = nn.Parameter(torch.FloatTensor([0.0]), requires_grad=True)
 
     def forward(self, support, query, x):
         r"""
@@ -92,7 +92,7 @@ class AirTransPredictHead(nn.Module):
         s = s.unsqueeze(0)
         q = self.encoder_flatten(boxes_features)
         q = q.unsqueeze(1)
-        fg_distance = (s - q).mean(2)  # [box_num, n, 512]
+        fg_distance = (s - q).mean(2).pow(2)  # [box_num, n, 512]
         # fg_distance = (s - q).mean([2, 3, 4])  # [box_num, n]
         bg_distance = self.predict_bg_score(x)  # [box_num, 1]
         distance = torch.cat([fg_distance, bg_distance], dim=1)  # [box_num, n + 1]
@@ -103,7 +103,7 @@ class AirTransPredictHead(nn.Module):
         s = s.unsqueeze(0)
         q = self.encoder(boxes_features)
         q = q.unsqueeze(1)
-        fg_distance = (s - q).mean([2, 3, 4])  # [box_num, n]
+        fg_distance = (s - q).mean([2, 3, 4]).pow(2)  # [box_num, n]
         bg_distance = self.predict_bg_score(x)  # [box_num, 1]
         distance = torch.cat([fg_distance, bg_distance], dim=1)  # [box_num, n + 1]
         return distance

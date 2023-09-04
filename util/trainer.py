@@ -23,7 +23,7 @@ def trainer_for_air_trans(
         # 基础参数
         way=5, shot=2, query_batch=16, is_cuda=True, lr=2e-02,
         # 设备参数
-         gpu_index=0,
+        gpu_index=0,
         # 数据集参数
         root=None, json_path=None, img_path=None, split_cats=None,
         # 模型
@@ -164,7 +164,9 @@ def trainer_for_air_trans(
                 losses += v * w
                 sum += v
                 loss_this_iteration.update({k: float(v)})
-            tqdm.write('{:2} / {:3} / {:.6f} / {}'.format(epoch + 1, iteration, (float(sum)), result))
+            scale = model.roi_heads.box_predictor.scale.exp()[0]
+            tqdm.write(
+                '{:2} / {:3} / {:.6f} / {:.6f} / {}'.format(epoch + 1, iteration, (float(sum)), float(scale), result))
 
             loss_this_iteration = {iteration: loss_this_iteration}
             loss_dict_train.update(loss_this_iteration)

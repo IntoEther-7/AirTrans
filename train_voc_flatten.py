@@ -35,7 +35,7 @@ def way_shot_train(way, shot, lr, loss_weights, gpu_index, loss_weights_index, s
         way, shot, is_flatten=True, roi_size=5, num_classes=way + 1,
         # backbone
         backbone_name='resnet50', pretrained=True,
-        returned_layers=None, trainable_layers=4,
+        returned_layers=None, trainable_layers=3,
         # transform parameters
         min_size=600, max_size=1000,
         image_mean=None, image_std=None,
