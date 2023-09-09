@@ -64,7 +64,7 @@ class AirTransRoIHeads(RoIHeads):
         box_fc = self.box_head(box_features)  # (roi数, 1024?)
 
         # 送入head
-        class_logits, box_regression = self.box_predictor.forward(support, box_features, box_fc)
+        class_logits, box_regression, loss_aux = self.box_predictor.forward(support, box_features, box_fc)
 
         result: List[Dict[str, torch.Tensor]] = []
         losses = {}
@@ -74,7 +74,8 @@ class AirTransRoIHeads(RoIHeads):
                 class_logits, box_regression, labels, regression_targets)
             losses = {
                 "loss_classifier": loss_classifier,
-                "loss_box_reg": loss_box_reg
+                "loss_box_reg": loss_box_reg,
+                "loss_aux": loss_aux
             }
         else:
             boxes, scores, labels = self.postprocess_detections(class_logits, box_regression, proposals, image_shapes)

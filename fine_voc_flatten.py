@@ -32,7 +32,7 @@ def way_shot_train(way, shot, lr, loss_weights, gpu_index, loss_weights_index, s
         .format(loss_weights_index, way, shot, lr)
     model = AirTrans(
         # box_predictor params
-        way, shot, is_flatten=False, roi_size=5, num_classes=way + 1,
+        way, shot, is_flatten=True, roi_size=5, num_classes=way + 1,
         # backbone
         backbone_name='resnet50', pretrained=True,
         returned_layers=None, trainable_layers=3,
@@ -46,23 +46,24 @@ def way_shot_train(way, shot, lr, loss_weights, gpu_index, loss_weights_index, s
         rpn_post_nms_top_n_train=1000, rpn_post_nms_top_n_test=1000,
         rpn_nms_thresh=0.7,
         rpn_fg_iou_thresh=0.7, rpn_bg_iou_thresh=0.3,
-        rpn_batch_size_per_image=100, rpn_positive_fraction=0.5,
+        rpn_batch_size_per_image=32, rpn_positive_fraction=0.5,
         rpn_score_thresh=0.0,
         # Box parameters
         box_roi_pool=None, box_head=None, box_predictor=None,
-        box_score_thresh=0.05, box_nms_thresh=0.7, box_detections_per_img=100,
+        box_score_thresh=0.05, box_nms_thresh=0.7, box_detections_per_img=20,
         box_fg_iou_thresh=0.5, box_bg_iou_thresh=0.5,
-        box_batch_size_per_image=100, box_positive_fraction=0.25,
+        box_batch_size_per_image=32, box_positive_fraction=0.25,
         bbox_reg_weights=(10., 10., 5., 5.),
         rpn_focal=False, head_focal=False
     )
 
     trainer_for_air_trans(way=way, shot=shot, query_batch=4, is_cuda=True, lr=lr, gpu_index=gpu_index,
                           root=root, json_path=json_path, img_path=img_path, split_cats=split_cats, model=model,
-                          max_epoch=60, continue_epoch=None, continue_iteration=None, continue_weight=None,
+                          max_epoch=10, continue_epoch=None, continue_iteration=None, continue_weight=weight,
                           save_root=save_root, loss_weights=loss_weights)
 
 
 if __name__ == '__main__':
     random.seed(4096)
-    way_shot_train(5, 5, 2e-03, loss_weights0, 0, '20230905_decoder_aux', split_cats=base_ids_voc1)
+    weight = "/data/chenzh/AirTrans/results/air_trans_20230905_flatten_aux/result_voc_r50_5way_5shot_lr0.002/weights/AirTrans_60_1305.pth"
+    way_shot_train(5, 5, 2e-04, loss_weights0, 1, '20230905_flatten_aux_novel', split_cats=novel_ids_voc1)

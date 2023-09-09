@@ -23,7 +23,7 @@ continue_weight = None
 save_root = None
 
 
-def way_shot_test(way, shot, lr, index):
+def way_shot_test(way, shot, lr, index, continue_weight, save_root):
     # result_voc_r50_2way_5shot_lr2e-06_loss_weight_0
     model = AirTrans(
         # box_predictor params
@@ -73,6 +73,12 @@ def way_shot_test(way, shot, lr, index):
 if __name__ == '__main__':
     continue_weight = 'AirTrans_60_1305.pth'
     save_root = os.path.join('results',
-                             'air_trans_20230904_decoder',
+                             'air_trans_20230905_decoder_aux',
+                             'result_voc_r50_5way_5shot_lr0.002')
+    way_shot_test(5, 5, 2e-04, 0, continue_weight, save_root)
+
+    continue_weight = 'AirTrans_10_246.pth'
+    save_root = os.path.join('results',
+                             'air_trans_20230905_decoder_aux_novel',
                              'result_voc_r50_5way_5shot_lr0.0002')
-    way_shot_test(5, 5, 2e-04, 0)
+    way_shot_test(5, 5, 2e-04, 0, continue_weight, save_root)

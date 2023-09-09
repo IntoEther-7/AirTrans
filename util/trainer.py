@@ -104,13 +104,11 @@ def trainer_for_air_trans(
     # dt_string = now.strftime("%d_%m_%Y-%H_%M_%S")
     # log_print = open(os.path.join(save_root, '{}way_{}shot-{}.log'.format(way, shot, dt_string)), 'w')
     # sys.stdout = log_print
-
-    # 训练轮数
-    if continue_epoch is not None and continue_iteration is not None:
-        continue_weight = os.path.join(save_root, 'weights',
-                                       'AirTrans_{}_{}.pth'.format(continue_epoch, continue_iteration))
+    if continue_weight is not None:
         weight = torch.load(continue_weight)
         model.load_state_dict(weight['models'])
+    # 训练轮数
+    if continue_epoch is not None and continue_iteration is not None:
         continue_done = False
     else:
         continue_epoch = 0

@@ -13,16 +13,8 @@ from pycocotools.cocoeval import COCOeval
 import json
 from util.dataset import *
 
-category_list = base_ids_voc1
-
-if __name__ == "__main__":
-    gt_path = "/home/chenzh/code/FRNOD/datasets/voc/VOCdevkit/VOC2012/cocoformatJson/voc_2012_train.json"  # 存放真实标签的路径
-    dt_path = os.path.join('./results',
-                           'air_trans_20230903_decoder',
-                           'result_voc_r50_5way_5shot_lr0.0002',
-                           'validations',
-                           'prediction.json')  # 存放检测结果的路径
-    # dt_path = "my_result.json"  # 存放检测结果的路径
+novel = base_ids_voc1
+def eval_voc(category_list, gt_path, dt_path):
     print(dt_path)
     # 处理阶段START-----------------------------------
     img_ids = []
@@ -58,3 +50,16 @@ if __name__ == "__main__":
     cocoEval.evaluate()
     cocoEval.accumulate()
     cocoEval.summarize()
+
+gt_path = "/home/chenzh/code/FRNOD/datasets/voc/VOCdevkit/VOC2012/cocoformatJson/voc_2012_train.json"  # 存放真实标签的路径
+
+if __name__ == "__main__":
+    eval_voc(
+        novel,
+        gt_path,
+        "/data/chenzh/AirTrans/results/air_trans_20230905_flatten_aux/result_voc_r50_5way_5shot_lr0.002/validations/prediction.json")
+    eval_voc(
+        novel,
+        gt_path,
+        "/data/chenzh/AirTrans/results/air_trans_20230905_decoder_aux/result_voc_r50_5way_5shot_lr0.002/validations/prediction.json")
+

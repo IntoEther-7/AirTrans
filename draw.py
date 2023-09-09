@@ -100,5 +100,5 @@ def draw(root):
         plt.close(fig)
 
 if __name__ == '__main__':
-    max_epoch = 60
-    draw('/data/chenzh/AirTrans/results/air_trans_20230903_decoder/result_voc_r50_5way_5shot_lr0.0002/results')
+    max_epoch = 10
+    draw('/data/chenzh/AirTrans/results/air_trans_20230905_decoder_aux_novel/result_voc_r50_5way_5shot_lr0.0002/results')

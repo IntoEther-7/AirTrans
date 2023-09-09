@@ -36,16 +36,18 @@ class AirTransPredictHead(nn.Module):
         self.is_flatten = is_flatten
 
         self.encoder = nn.Sequential(
-            nn.Conv2d(256, 256, kernel_size=roi_size, stride=1, padding=0),
+            # nn.Conv2d(256, 256, kernel_size=roi_size, stride=1, padding=0),
             nn.Conv2d(256, 64, kernel_size=1, stride=1, padding=0),
             nn.BatchNorm2d(64),
-            nn.LeakyReLU(inplace=True))
+            nn.LeakyReLU(inplace=True))  # [box_num, c, s, s] -> [box_num, 64, 1, 1]
+        #
         self.encoder_flatten = nn.Sequential(
-            nn.Flatten(),  # [num, c, s, s] -> # [num, c * s * s]
-            nn.Linear(256 * roi_size * roi_size, 1024),
-            nn.Linear(1024, 64),
+            nn.Flatten(),  # [n, c, s, s] -> # [n, c * s * s]
+            nn.Linear(256 * roi_size * roi_size, 1024),  # [n, c * s * s] -> [n, 1024]
+            nn.Linear(1024, 64),  # [n, 1024] -> [n, 64]
             # nn.BatchNorm2d(512),
             nn.LeakyReLU(inplace=True))
+        #  (256 * 5 * 5 -> 6400 ->1024 -> 64)
 
         self.decoder = nn.Sequential(
             nn.Linear(6, 6),
@@ -74,13 +76,18 @@ class AirTransPredictHead(nn.Module):
 
         # 分类
         if self.is_flatten:
-            distance = self.cls_predictor_flatten(support, query, x)
+            distance, loss_aux = self.cls_predictor_flatten(support, query, x)
         else:
-            distance = self.cls_predictor(support, query, x)
+            distance, loss_aux = self.cls_predictor(support, query, x)
         scores = self.metric(distance)
-        return scores, torch.cat([bbox_deltas for _ in range(self.way + 1)], dim=1)
+        return scores, torch.cat([bbox_deltas for _ in range(self.way + 1)], dim=1), loss_aux
 
     def metric(self, distance):
+        r"""
+        
+        :param distance: [box_num, n + 1] 
+        :return: [box_num, n + 1] 
+        """
         distance = self.decoder(distance)
         distance = 2 * (distance - 0.5)
         confidence = distance.neg()
@@ -88,22 +95,56 @@ class AirTransPredictHead(nn.Module):
         return score
 
     def cls_predictor_flatten(self, support: Tensor, boxes_features: Tensor, x: Tensor):
-        s = self.encoder_flatten(support)
-        s = s.unsqueeze(0)
-        q = self.encoder_flatten(boxes_features)
-        q = q.unsqueeze(1)
+        r"""
+        
+        :param support: [n, c, s, s]
+        :param boxes_features: 
+        :param x: 
+        :return: 
+        """
+        s = self.encoder_flatten(support)  # [n, c, s, s] -> [n, 64]
+        loss_aux = self.auxrank(s)
+        s = s.unsqueeze(0)  # [1, n, 64]
+        q = self.encoder_flatten(boxes_features)  # [box_num, 64]
+        q = q.unsqueeze(1)  # [box_num, 1, 64]
         fg_distance = (s - q).mean(2).pow(2)  # [box_num, n, 512]
         # fg_distance = (s - q).mean([2, 3, 4])  # [box_num, n]
         bg_distance = self.predict_bg_score(x)  # [box_num, 1]
         distance = torch.cat([fg_distance, bg_distance], dim=1)  # [box_num, n + 1]
-        return distance
+        return distance, loss_aux
 
     def cls_predictor(self, support: Tensor, boxes_features: Tensor, x: Tensor):
-        s = self.encoder(support)
+        r"""
+        
+        :param support: [n, c, s, s]
+        :param boxes_features: 
+        :param x: 
+        :return: 
+        """
+        s = self.encoder(support)  # [n, 64, 1, 1]
+        loss_aux = self.auxrank(s)
         s = s.unsqueeze(0)
-        q = self.encoder(boxes_features)
+        q = self.encoder(boxes_features)  # [box_num, 64, 1, 1]
         q = q.unsqueeze(1)
         fg_distance = (s - q).mean([2, 3, 4]).pow(2)  # [box_num, n]
         bg_distance = self.predict_bg_score(x)  # [box_num, 1]
         distance = torch.cat([fg_distance, bg_distance], dim=1)  # [box_num, n + 1]
-        return distance
+        return distance, loss_aux
+
+    def auxrank(self, support: torch.Tensor):
+        r"""
+        
+        :param support: [n, 64]
+        :return: 
+        """
+        if self.training:
+            s = F.normalize(support)
+            s = s.reshape(self.way, -1).pow(2)
+            _, size = s.shape
+            loss_aux = torch.zeros([size, ]).to(support.device)  # [64]
+            for i in range(self.way):
+                for j in range(i):
+                    loss_aux += s[i] * s[j]
+            return loss_aux.mean()
+        else:
+            return None
