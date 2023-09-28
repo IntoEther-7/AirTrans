@@ -83,7 +83,7 @@ class AirTrans(GeneralizedRCNN):
         :param box_predictor:
         :param box_score_thresh:
         :param box_nms_thresh:
-        :param box_detections_per_img:
+        :param box_detections_per_img: 最终保留的框个数
         :param box_fg_iou_thresh:
         :param box_bg_iou_thresh:
         :param box_batch_size_per_image:

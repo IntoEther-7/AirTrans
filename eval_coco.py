@@ -13,7 +13,7 @@ from pycocotools.cocoeval import COCOeval
 import json
 from util.dataset import *
 
-novel = base_ids_voc1
+novel = base_ids_coco
 
 
 def eval_voc(category_list, gt_path, dt_path):
@@ -60,8 +60,8 @@ if __name__ == "__main__":
     eval_voc(
         novel,
         gt_path,
-        "/data/chenzh/AirTrans/results/20230910_conv/voc_5way_5shot_lr0.002/validations/prediction.json")
+        "/data/chenzh/AirTrans/results/20230910_conv/coco_5way_5shot_lr0.002/validations/prediction.json")
     eval_voc(
         novel,
         gt_path,
-        "/data/chenzh/AirTrans/results/20230910_flatten/voc_5way_5shot_lr0.002/validations/prediction.json")
+        "/data/chenzh/AirTrans/results/20230910_flatten/coco_5way_5shot_lr0.002/validations/prediction.json")

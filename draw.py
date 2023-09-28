@@ -15,9 +15,9 @@ from matplotlib import pyplot as plt
 
 max_epoch = 40
 loss_weights = {'loss_classifier': 1, 'loss_box_reg': 1,
-                            'loss_objectness': 1, 'loss_rpn_box_reg': 1,
-                            'loss_attention': 1, 'loss_aux': 1,
-                            'loss_sum': 1}
+                'loss_objectness': 1, 'loss_rpn_box_reg': 1,
+                'loss_attention': 1, 'loss_aux': 1,
+                'loss_sum': 1}
 
 
 def epoch_loss_process(loss_dict: dict):
@@ -99,6 +99,8 @@ def draw(root):
         plt.savefig(os.path.join(root, '{}_epoch.png'.format(k)))
         plt.close(fig)
 
+
 if __name__ == '__main__':
-    max_epoch = 10
-    draw('/data/chenzh/AirTrans/results/air_trans_20230905_decoder_aux_novel/result_voc_r50_5way_5shot_lr0.0002/results')
+    max_epoch = 60
+    draw('/data/chenzh/AirTrans/results/air_trans_20230905_flatten_aux/result_voc_r50_5way_5shot_lr0.002/results')
+    draw('/data/chenzh/AirTrans/results/air_trans_20230905_decoder_aux/result_voc_r50_5way_5shot_lr0.002/results')

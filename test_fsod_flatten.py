@@ -18,9 +18,9 @@ from model.air_trans import AirTrans
 from util.tester import tester_for_air_trans
 
 torch.set_printoptions(sci_mode=False)
-root = '/home/chenzh/code/FRNOD/datasets/voc/VOCdevkit/VOC2012'
-json_path = 'cocoformatJson/voc_2012_train.json'
-img_path = 'JPEGImages'
+root = '/home/chenzh/code/FRNOD/datasets/fsod'
+json_path = 'annotations/fsod_train.json'
+img_path = 'images'
 continue_weight = None
 save_root = None
 
@@ -48,9 +48,9 @@ def way_shot_test(way, shot, lr, index, continue_weight, save_root):
 
 
 if __name__ == '__main__':
-    continue_weight = 'AirTrans_60_1305.pth'
+    continue_weight = 'AirTrans_25_10572.pth'
     save_root = os.path.join('results',
                              '20230910_flatten',
-                             'voc_5way_5shot_lr0.002')
+                             'fsod_5way_5shot_lr0.002')
     way_shot_test(5, 5, 2e-03, 1, continue_weight, save_root)
 

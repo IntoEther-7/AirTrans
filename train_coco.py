@@ -7,7 +7,7 @@
 @Version: 1.0
 @Description: None
 """
-
+from curr_model import *
 from model.air_trans import AirTrans
 from util.dataset import *
 from util.trainer import trainer_for_air_trans
@@ -28,34 +28,9 @@ loss_weights无监督attention = {'loss_classifier': 1, 'loss_box_reg': 1,
 
 
 def way_shot_train(way, shot, lr, loss_weights, gpu_index, loss_weights_index, split_cats):
-    save_root = '/data/chenzh/AirTrans/results/air_trans_{}/result_coco_r50_{}way_{}shot_lr{}' \
-        .format(loss_weights_index, way, shot, lr)
-    model = AirTrans(
-        # box_predictor params
-        way, shot, roi_size=5, num_classes=way + 1,
-        # backbone
-        backbone_name='resnet50', pretrained=True,
-        returned_layers=None, trainable_layers=3,
-        # transform parameters
-        min_size=600, max_size=1000,
-        image_mean=None, image_std=None,
-        # RPN parameters
-        rpn_anchor_generator=None,
-        rpn_head=None,
-        rpn_pre_nms_top_n_train=2000, rpn_pre_nms_top_n_test=2000,
-        rpn_post_nms_top_n_train=1000, rpn_post_nms_top_n_test=1000,
-        rpn_nms_thresh=0.7,
-        rpn_fg_iou_thresh=0.7, rpn_bg_iou_thresh=0.3,
-        rpn_batch_size_per_image=256, rpn_positive_fraction=0.5,
-        rpn_score_thresh=0.0,
-        # Box parameters
-        box_roi_pool=None, box_head=None, box_predictor=None,
-        box_score_thresh=0.05, box_nms_thresh=0.5, box_detections_per_img=100,
-        box_fg_iou_thresh=0.5, box_bg_iou_thresh=0.5,
-        box_batch_size_per_image=512, box_positive_fraction=0.25,
-        bbox_reg_weights=(10., 10., 5., 5.),
-        rpn_focal=False, head_focal=False
-    )
+    save_root = get_save_root(loss_weights_index, way, shot, 'coco', lr)
+
+    model = get_model(way, shot, False)
 
     trainer_for_air_trans(way=way, shot=shot, query_batch=4, is_cuda=True, lr=lr, gpu_index=gpu_index,
                           root=root, json_path=json_path, img_path=img_path, split_cats=split_cats, model=model,
@@ -65,4 +40,4 @@ def way_shot_train(way, shot, lr, loss_weights, gpu_index, loss_weights_index, s
 
 if __name__ == '__main__':
     random.seed(4096)
-    way_shot_train(5, 5, 2e-04, loss_weights0, 0, '20230903_decoder', split_cats=base_ids_coco)
+    way_shot_train(5, 5, 2e-03, loss_weights0, 0, 'conv', split_cats=base_ids_coco)
