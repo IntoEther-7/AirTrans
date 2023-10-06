@@ -50,7 +50,7 @@ def way_shot_test(way, shot, lr, index, continue_weight, save_root):
 if __name__ == '__main__':
     continue_weight = 'AirTrans_60_1305.pth'
     save_root = os.path.join('results',
-                             '20230910_flatten',
-                             'voc_5way_5shot_lr0.002')
+                             '20230915_flatten',
+                             'voc_5way_5shot')
     way_shot_test(5, 5, 2e-03, 1, continue_weight, save_root)
 
