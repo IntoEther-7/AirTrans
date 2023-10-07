@@ -54,7 +54,7 @@ def eval_voc(category_list, gt_path, dt_path):
     cocoEval.summarize()
 
 
-gt_path = "/home/chenzh/code/FRNOD/datasets/voc/VOCdevkit/VOC2012/cocoformatJson/voc_2012_train.json"  # 存放真实标签的路径
+gt_path = "/home/chenzh/code/FRNOD/datasets/coco/annotations/instances_train2017.json"  # 存放真实标签的路径
 
 if __name__ == "__main__":
     eval_voc(
@@ -64,4 +64,4 @@ if __name__ == "__main__":
     eval_voc(
         novel,
         gt_path,
-        "/data/chenzh/AirTrans/results/20230910_flatten/coco_5way_5shot_lr0.002/validations/prediction.json")
+        "/data/chenzh/AirTrans/results/20230915_flatten/coco_5way_5shot/validations/prediction.json")

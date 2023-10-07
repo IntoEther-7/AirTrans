@@ -64,4 +64,4 @@ if __name__ == "__main__":
     eval_voc(
         novel,
         gt_path,
-        "/data/chenzh/AirTrans/results/20230910_flatten/voc_5way_5shot_lr0.002/validations/prediction.json")
+        "/data/chenzh/AirTrans/results/20230915_flatten/voc_5way_5shot/validations/prediction.json")
