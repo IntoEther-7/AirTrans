@@ -13,7 +13,7 @@ from pycocotools.cocoeval import COCOeval
 import json
 from util.dataset import *
 
-novel = base_ids_voc1
+novel = novel_ids_voc1
 
 
 def eval_voc(category_list, gt_path, dt_path):
@@ -27,7 +27,8 @@ def eval_voc(category_list, gt_path, dt_path):
                 img_ids.append(obj['image_id'])
     with open(gt_path, 'r') as f:
         j = json.load(f)
-        images, type_value, annotations, categories = j.values()
+        images = j['images']
+        annotations = j['annotations']
         del_image = []
         del_ann = []
         for img in images:
@@ -57,11 +58,12 @@ def eval_voc(category_list, gt_path, dt_path):
 gt_path = "/home/chenzh/code/FRNOD/datasets/voc/VOCdevkit/VOC2012/cocoformatJson/voc_2012_train.json"  # 存放真实标签的路径
 
 if __name__ == "__main__":
-    eval_voc(
-        novel,
-        gt_path,
-        "/data/chenzh/AirTrans/results/20230910_conv/voc_5way_5shot_lr0.002/validations/prediction.json")
-    eval_voc(
-        novel,
-        gt_path,
-        "/data/chenzh/AirTrans/results/20230915_flatten/voc_5way_5shot/validations/prediction.json")
+    eval_voc(novel, gt_path, "/data/backup/chenzh/AirTrans/res/voc/pre_0.1.json")
+    eval_voc(novel, gt_path, "/data/backup/chenzh/AirTrans/res/voc/pre_0.2.json")
+    eval_voc(novel, gt_path, "/data/backup/chenzh/AirTrans/res/voc/pre_0.3.json")
+    eval_voc(novel, gt_path, "/data/backup/chenzh/AirTrans/res/voc/pre_0.4.json")
+    eval_voc(novel, gt_path, "/data/backup/chenzh/AirTrans/res/voc/pre_0.5.json")
+    eval_voc(novel, gt_path, "/data/backup/chenzh/AirTrans/res/voc/pre_0.6.json")
+    eval_voc(novel, gt_path, "/data/backup/chenzh/AirTrans/res/voc/pre_0.7.json")
+    eval_voc(novel, gt_path, "/data/backup/chenzh/AirTrans/res/voc/pre_0.8.json")
+    eval_voc(novel, gt_path, "/data/backup/chenzh/AirTrans/res/voc/pre_0.9.json")

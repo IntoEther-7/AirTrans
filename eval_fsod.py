@@ -27,7 +27,8 @@ def eval_voc(category_list, gt_path, dt_path):
                 img_ids.append(obj['image_id'])
     with open(gt_path, 'r') as f:
         j = json.load(f)
-        images, type_value, annotations, categories = j.values()
+        images = j['images']
+        annotations = j['annotations']
         del_image = []
         del_ann = []
         for img in images:

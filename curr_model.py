@@ -39,7 +39,7 @@ def get_model(way, shot, is_flatten):
     )
 
 
-prefix = '20230915'
+prefix = '20230926'
 
 
 def get_save_root(surfix, way, shot, dataset, lr):

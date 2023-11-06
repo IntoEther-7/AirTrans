@@ -23,7 +23,10 @@ from model.air_trans_rpn import AirTransRPN
 from model.attention import FullCrossAttentionModule
 from model.backbone import FeatureExtractor
 from model.roi_head import AirTransRoIHeads
+from util.visual import judge
 
+
+save_extra_result = True
 
 class AirTrans(GeneralizedRCNN):
     def __init__(self,
@@ -171,6 +174,12 @@ class AirTrans(GeneralizedRCNN):
         :param targets: [Dict{'boxes': tensor(n, 4), 'labels': tensor(n,)}, 'image_id': int, 'category_id': int, 'id': int]
         :return:
         """
+        # 保存实验结果
+        images_id = targets[0]['image_id'][0]
+        save_root = "/data/backup/chenzh/AirTrans/visual"
+        if save_extra_result:
+            judge(torch.stack(support), "{}/{}/{}".format(save_root, images_id, "support_raw"))
+
         # 校验及预处理
         if self.training and targets is None:
             raise ValueError("In training mode, targets should be passed")
@@ -214,7 +223,7 @@ class AirTrans(GeneralizedRCNN):
         features = self.backbone.forward(images.tensors)  # (n, channels, h, w)
 
         # 注意力
-        # [n, m, c, s, s]
+        # [n, m, c, s, s], [n, c, s, s]
         attention_f, support_aggregate = self.attention.forward(support, features)
 
         if isinstance(features, torch.Tensor):
@@ -231,6 +240,21 @@ class AirTrans(GeneralizedRCNN):
 
         detections = self.transform.postprocess(detections, images.image_sizes, original_image_sizes)
 
+        # 保存实验结果
+        if save_extra_result:
+            features_save_3 = features['0']
+            features_save_4 = features['1']
+            features_save_pool = features['pool']
+            attention_f_save_3 = attention_f['0']
+            attention_f_save_4 = attention_f['1']
+            attention_f_save_pool = attention_f['pool']
+            judge(support, "{}/{}/{}".format(save_root, images_id, "support"))
+            judge(features_save_3, "{}/{}/{}".format(save_root, images_id, "features_save_3"))
+            judge(features_save_4, "{}/{}/{}".format(save_root, images_id, "features_save_4"))
+            judge(features_save_pool, "{}/{}/{}".format(save_root, images_id, "features_save_pool"))
+            judge(attention_f_save_3, "{}/{}/{}".format(save_root, images_id, "attention_f_save_3"))
+            judge(attention_f_save_4, "{}/{}/{}".format(save_root, images_id, "attention_f_save_4"))
+            judge(attention_f_save_pool, "{}/{}/{}".format(save_root, images_id, "attention_f_save_pool"))
 
         losses = {}
         losses.update(detector_losses)

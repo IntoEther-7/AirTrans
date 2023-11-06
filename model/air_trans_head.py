@@ -32,10 +32,9 @@ class AirTransPredictHead(nn.Module):
         self.way = way
         self.shot = shot
         self.representation_size = representation_size
-        self.bbox_pred = nn.Linear(representation_size, 4)
+        self.bbox_pred = nn.Linear(representation_size, (way + 1) * 4)
         self.is_flatten = is_flatten
-
-        self.encoder = nn.Sequential(
+        self.encoder_conv = nn.Sequential(
             # nn.Conv2d(256, 256, kernel_size=roi_size, stride=1, padding=0),
             nn.Conv2d(256, 64, kernel_size=1, stride=1, padding=0),
             nn.BatchNorm2d(64),
@@ -48,6 +47,11 @@ class AirTransPredictHead(nn.Module):
             # nn.BatchNorm2d(512),
             nn.LeakyReLU(inplace=True))
         #  (256 * 5 * 5 -> 6400 ->1024 -> 64)
+        self.encoder_score = nn.Sequential(
+            nn.Flatten(),  # [n, c, s, s] -> # [n, c * s * s]
+            nn.Linear(256 * roi_size * roi_size, 1024),  # [n, c * s * s] -> [n, 1024]
+            nn.Linear(1024, way),  # [n, 1024] -> [n, way + 1]
+            nn.LeakyReLU(inplace=True))
 
         self.decoder = nn.Sequential(
             nn.Linear(6, 6),
@@ -59,6 +63,7 @@ class AirTransPredictHead(nn.Module):
             nn.Linear(representation_size, 1),
         )
         self.scale = nn.Parameter(torch.FloatTensor([0.0]), requires_grad=True)
+        self.distance_weight = nn.Parameter(torch.FloatTensor([0.0, 0.0, 0.0]), requires_grad=True)
 
     def forward(self, support, query, x):
         r"""
@@ -75,12 +80,15 @@ class AirTransPredictHead(nn.Module):
         bbox_deltas = self.bbox_pred(x)
 
         # 分类
-        if self.is_flatten:
-            distance, loss_aux = self.cls_predictor_flatten(support, query, x)
-        else:
-            distance, loss_aux = self.cls_predictor(support, query, x)
-        scores = self.metric(distance)
-        return scores, torch.cat([bbox_deltas for _ in range(self.way + 1)], dim=1), loss_aux
+        distance_f, loss_aux_f = self.cls_predictor_flatten(support, query, x)
+        distance_c, loss_aux_c = self.cls_predictor_conv(support, query, x)
+        distance_s, _ = self.cls_predictor_score(support, query, x)
+        distance = torch.stack([distance_f, distance_c, distance_s], dim=0)  # [3, c, way + 1]
+        multi_weight = F.softmax(self.distance_weight.exp()).unsqueeze(1).unsqueeze(1)
+        distance = (distance * multi_weight).sum(0)
+        loss_aux = loss_aux_f + loss_aux_c
+        scores = self.metric(distance)  # [num_box, n + 1]
+        return scores, bbox_deltas, loss_aux
 
     def metric(self, distance):
         r"""
@@ -113,7 +121,7 @@ class AirTransPredictHead(nn.Module):
         distance = torch.cat([fg_distance, bg_distance], dim=1)  # [box_num, n + 1]
         return distance, loss_aux
 
-    def cls_predictor(self, support: Tensor, boxes_features: Tensor, x: Tensor):
+    def cls_predictor_conv(self, support: Tensor, boxes_features: Tensor, x: Tensor):
         r"""
         
         :param support: [n, c, s, s]
@@ -121,15 +129,25 @@ class AirTransPredictHead(nn.Module):
         :param x: 
         :return: 
         """
-        s = self.encoder(support)  # [n, 64, 1, 1]
+        s = self.encoder_conv(support)  # [n, 64, 1, 1]
         loss_aux = self.auxrank(s)
         s = s.unsqueeze(0)
-        q = self.encoder(boxes_features)  # [box_num, 64, 1, 1]
+        q = self.encoder_conv(boxes_features)  # [box_num, 64, 1, 1]
         q = q.unsqueeze(1)
         fg_distance = (s - q).mean([2, 3, 4]).pow(2)  # [box_num, n]
         bg_distance = self.predict_bg_score(x)  # [box_num, 1]
         distance = torch.cat([fg_distance, bg_distance], dim=1)  # [box_num, n + 1]
         return distance, loss_aux
+
+    def cls_predictor_score(self, support: Tensor, boxes_features: Tensor, x: Tensor):
+        s = self.encoder_score(support)  # [n, way]
+        s = s.unsqueeze(0)  # [1, n, way]
+        q = self.encoder_score(boxes_features)  # [box_num, way]
+        q = q.unsqueeze(1)  # [box_num, 1, way]
+        fg_distance = (s - q).mean([2]).pow(2)  # [box_num, n]
+        bg_distance = self.predict_bg_score(x)  # [box_num, 1]
+        distance = torch.cat([fg_distance, bg_distance], dim=1)  # [box_num, n + 1]
+        return distance, None
 
     def auxrank(self, support: torch.Tensor):
         r"""
@@ -147,4 +165,4 @@ class AirTransPredictHead(nn.Module):
                     loss_aux += s[i] * s[j]
             return loss_aux.mean()
         else:
-            return None
+            return 0

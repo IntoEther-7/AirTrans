@@ -39,5 +39,5 @@ def way_shot_train(way, shot, lr, loss_weights, gpu_index, loss_weights_index, s
 
 
 if __name__ == '__main__':
-    random.seed(4096)
+    random.seed(114514)
     way_shot_train(5, 5, 2e-03, loss_weights0, 0, 'conv', split_cats=base_ids_voc1)
